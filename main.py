@@ -34,6 +34,8 @@ def get_sended_uids(db_name: str) -> list:
             uids_list.append(i[0])
 
         con.close()
+        print(f'sended uids: {uids_list}')
+
         return uids_list
     else:
         print("New database")
@@ -43,13 +45,6 @@ def get_sended_uids(db_name: str) -> list:
         con.commit()
         con.close()
         return []
-
-
-def check_uid_in_uids_list(uids_list: list, uid: int) -> bool:
-    if uid in uids_list:
-        return True
-    else:
-        return False
 
 
 def get_letter(uid):
@@ -90,15 +85,21 @@ def del_uid(uid):
     return f'uid {uid} deleted'
 
 
-def get_mail_uids() -> list:
-    mail.literal = u"Заявка с сайта [b2b.ttk.ru]".encode('utf-8')
-    #mail.literal = u"Дальний".encode('utf-8')
-    _, email_uids_list = mail.uid('SEARCH', 'CHARSET', 'UTF-8', 'SUBJECT')
+def get_mail_uids(search_subj: str = '', search_from: str = '') -> list:
 
+    # mail.literal = u"Заявка с сайта [b2b.ttk.ru]".encode('utf-8')
+
+    mail.literal = search_subj.encode('utf-8')
+    subj_command = ' SUBJECT' if search_subj else ''
+    from_command = f'HEADER FROM "{search_from}"' if search_from else ''
+    search_string = from_command + subj_command
+    print((search_string + f' {search_subj}').strip())
+
+    _, email_uids_list = mail.uid('SEARCH', 'CHARSET', 'UTF-8', search_string)
     uids_list = email_uids_list[0].split()
-    email_uid = uids_list[-1]
     uids_int_list = [int(x.decode()) for x in uids_list]
     uids_int_list.sort()
+    print(f'mail uids: {uids_int_list}')
 
     return uids_int_list
 
@@ -106,14 +107,14 @@ def get_mail_uids() -> list:
 def main():
 
     sended_uids_list = get_sended_uids(DB_NAME)
-    mail_uids = get_mail_uids()
+    mail_uids = get_mail_uids(search_subj="заявка", search_from='tilda')
 
     new_uids = set(mail_uids).difference(set(sended_uids_list))
+    print(f'diff uids: {new_uids}')
 
     # print(sended_uids_list)
     # print(mail_uids)
     # print(new_uids)
-
 
     for uid in new_uids:
         msg_subject, msg_text, msg_date, msg_from = get_letter(str(uid).encode())
@@ -133,10 +134,10 @@ def main():
         bot.send_message(chat_id=CHAT_ID, text=text)
         add_uid(uid)
 
-        # print(name)
-        # print(mobile)
-        # print(text)
-        # print('========================')
+
+# def main2():
+#     txt = 'HEADER FROM "dv.ttk.ru" SUBJECT'
+#     print(get_mail_uids(search_subj="заявка", search_from='tilda'))
 
 
 if __name__ == '__main__':
