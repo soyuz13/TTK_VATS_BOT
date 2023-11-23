@@ -10,6 +10,7 @@ import re
 
 import telebot
 from config import *
+import check_region
 
 
 mail = imaplib.IMAP4_SSL('mdvs.ttk.ru')
@@ -124,12 +125,19 @@ def main():
         name = name[0].split(':')[1][:-4].strip() if name else "=No name="
 
         mobile = re.search('Phone:.*<br>', msg_text)
+        reg = ""
+        if mobile:
+            num = check_region.clear_tel_number(mobile[0])
+            print(num)
+            reg = check_region.get_region(num)
         mobile = mobile[0].split(':')[1][:-4].strip() if mobile else "=No mobile="
 
         body = re.search('Textarea:.*<br>', msg_text)
         body = body[0].split(':')[1][:-4].strip() if body else "=No text="
 
-        text = '\n'.join((name, mobile, body, msg_date))
+
+
+        text = '\n'.join((name, mobile, body, reg, msg_date))
 
         bot.send_message(chat_id=CHAT_ID, text=text)
         add_uid(uid)
