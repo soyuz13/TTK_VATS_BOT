@@ -108,7 +108,7 @@ def get_mail_uids(search_subj: str = '', search_from: str = '') -> list:
 def main():
 
     sended_uids_list = get_sended_uids(DB_NAME)
-    mail_uids = get_mail_uids(search_subj="заявка", search_from='tilda')
+    mail_uids = get_mail_uids(search_subj="заявка") #, search_from='tilda')
 
     new_uids = set(mail_uids).difference(set(sended_uids_list))
     print(f'diff uids: {new_uids}')
