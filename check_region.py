@@ -14,19 +14,26 @@ def clear_tel_number(num):
 
 
 def get_region(num):
+    region = "Регион не определен"
+    timezone = "Время MSK--"
     num = int(num)
     if not num:
-        return "Регион не определен"
+        return region, timezone
 
-    df = pd.read_csv((Path(__file__).parent / 'abc_def_codes.csv'), delimiter=';')
-    df['start'] = (df['DEF'].astype(str) + df['От'].astype(str)).astype(int)
-    df['end'] = (df['DEF'].astype(str) + df['До'].astype(str)).astype(int)
-    DEF = int(str(num)[:3])
-    newdf = df.query('start < @num & end > @num & DEF == @DEF')
-    try:
-        region = newdf['Регион'].values[0]
-    except:
-        return "Регион не определен"
+    def_codes_file_path = Path(__file__).parent / 'abc_def_codes_timezone.csv'
 
-    return region
+    if def_codes_file_path.is_file():
+        df = pd.read_csv(def_codes_file_path, delimiter=';')
+        df['start'] = (df['DEF'].astype(str) + df['От'].astype(str)).astype(int)
+        df['end'] = (df['DEF'].astype(str) + df['До'].astype(str)).astype(int)
+        # df['timezone'] = df['timezone'].astype(str)
+        DEF = int(str(num)[:3])
+        newdf = df.query('start < @num & end > @num & DEF == @DEF')
+        try:
+            region = newdf['Регион'].values[0]
+            timezone = newdf['timezone'].values[0]
+        except:
+            return region, timezone
+
+    return region, timezone
 

@@ -5,7 +5,6 @@ from email.header import decode_header
 import email
 import imaplib
 import sqlite3
-from pathlib import Path
 import re
 
 import telebot
@@ -55,13 +54,11 @@ def get_letter(uid):
 
     msg_subject = decode_header(raw_message['Subject'])[0][0].decode()
     msg_body = raw_message.get_payload()
-    msg_date = raw_message["Date"]  #email.utils.parsedate_tz(raw_message["Date"])
-    #print(raw_message['Date'])
-    msg_from = raw_message["Return-path"]
+    msg_date = raw_message["Date"]  # email.utils.parsedate_tz(raw_message["Date"])
+    msg_from = raw_message["Return-path"]   # email.utils.parseaddr(raw_message['From'])
 
     if isinstance(msg_body, list):
         for i in msg_body:
-            #print(i.get_content_type())
             if not i.is_multipart():
                 msg_body = i.get_payload(decode=True).decode('utf-8').strip()
 
@@ -94,7 +91,7 @@ def get_mail_uids(search_subj: str = '', search_from: str = '') -> list:
     subj_command = ' SUBJECT' if search_subj else ''
     from_command = f'HEADER FROM "{search_from}"' if search_from else ''
     search_string = from_command + subj_command
-    print((search_string + f' {search_subj}').strip())
+    print('mail query parameters: ' + (search_string + f' {search_subj}').strip())
 
     _, email_uids_list = mail.uid('SEARCH', 'CHARSET', 'UTF-8', search_string)
     uids_list = email_uids_list[0].split()
@@ -106,36 +103,32 @@ def get_mail_uids(search_subj: str = '', search_from: str = '') -> list:
 
 
 def main():
-
     sended_uids_list = get_sended_uids(DB_NAME)
     mail_uids = get_mail_uids(search_subj="заявка") #, search_from='tilda')
 
     new_uids = set(mail_uids).difference(set(sended_uids_list))
     print(f'diff uids: {new_uids}')
 
-    # print(sended_uids_list)
-    # print(mail_uids)
-    # print(new_uids)
-
     for uid in new_uids:
         msg_subject, msg_text, msg_date, msg_from = get_letter(str(uid).encode())
-        # num = input(f'{get_mail_uids()}: ')
 
         name = re.search('Name:.*<br>', msg_text)
-        name = name[0].split(':')[1][:-4].strip() if name else "=No name="
+        name = name[0].split(':')[1][:-4].strip() if name else "==No name=="
 
         mobile = re.search('Phone:.*<br>', msg_text)
-        reg = ""
+        reg = timezone = ""
         if mobile:
             num = check_region.clear_tel_number(mobile[0])
-            print(num)
-            reg = check_region.get_region(num)
-        mobile = mobile[0].split(':')[1][:-4].strip() if mobile else "=No mobile="
+            print(f'parsed mobile: {num}')
+            reg, timezone = check_region.get_region(num)
+            timezone = 'MSK+'+str(timezone) if timezone>=0 else str(timezone)
+            timezone = "Время региона: " + timezone
+        mobile = mobile[0].split(':')[1][:-4].strip() if mobile else "==No mobile=="
 
         body = re.search('Textarea:.*<br>', msg_text)
-        body = body[0].split(':')[1][:-4].strip() if body else "=No text="
+        body = body[0].split(':')[1][:-4].strip() if body else "==No text=="
 
-        text = '\n'.join((name, mobile, body, reg, msg_date))
+        text = '\n'.join((name, mobile, body, reg, timezone, msg_date))
 
         bot.send_message(chat_id=CHAT_ID, text=text)
         add_uid(uid)
@@ -149,6 +142,3 @@ def main():
 if __name__ == '__main__':
     main()
     # del_uid(376)
-
-
-# #email.utils.parseaddr(raw_message['From'])
