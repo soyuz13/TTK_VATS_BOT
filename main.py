@@ -22,9 +22,9 @@ bot = telebot.TeleBot(token=BOT_TOKEN)
 
 def get_sended_uids(db_name: str) -> list:
 
-    if (Path(__file__).parent / db_name).is_file():
+    if db_name.is_file():
         print("Database exsists")
-        con = sqlite3.connect(DB_NAME)
+        con = sqlite3.connect(db_name)
         cur = con.cursor()
         res = cur.execute(f"SELECT * from  uids")
 
@@ -40,7 +40,7 @@ def get_sended_uids(db_name: str) -> list:
         return uids_list
     else:
         print("New database")
-        con = sqlite3.connect(DB_NAME)
+        con = sqlite3.connect(db_name)
         cur = con.cursor()
         cur.execute("CREATE TABLE uids(uid INTEGER)")
         con.commit()
@@ -134,8 +134,6 @@ def main():
 
         body = re.search('Textarea:.*<br>', msg_text)
         body = body[0].split(':')[1][:-4].strip() if body else "=No text="
-
-
 
         text = '\n'.join((name, mobile, body, reg, msg_date))
 
