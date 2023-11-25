@@ -20,20 +20,21 @@ def get_region(num):
     if not num:
         return region, timezone
 
-    def_codes_file_path = Path(__file__).parent / 'abc_def_codes_timezone.csv'
+    def_codes_file_path = Path(__file__).parent / 'tel_codes_tz.csv'
 
     if def_codes_file_path.is_file():
-        df = pd.read_csv(def_codes_file_path, delimiter=';')
-        df['start'] = (df['DEF'].astype(str) + df['От'].astype(str)).astype(int)
-        df['end'] = (df['DEF'].astype(str) + df['До'].astype(str)).astype(int)
-        # df['timezone'] = df['timezone'].astype(str)
+
+        types = {'Timezone': "int", 'DEF': "int", 'Region': 'str', 'From': 'str', 'To': 'str'}
+        df = pd.read_csv(def_codes_file_path, sep=';', header=0, dtype=types)
+
+        df['Start'] = (df['DEF'].astype(str) + df['From'].astype(str)).astype(int)
+        df['End'] = (df['DEF'].astype(str) + df['To'].astype(str)).astype(int)
         DEF = int(str(num)[:3])
-        newdf = df.query('start < @num & end > @num & DEF == @DEF')
+        newdf = df.query('Start < @num & End > @num')
         try:
-            region = newdf['Регион'].values[0]
-            timezone = newdf['timezone'].values[0]
+            region = newdf['Region'].values[0]
+            timezone = newdf['Timezone'].values[0]
         except:
             return region, timezone
 
     return region, timezone
-
