@@ -7,4 +7,4 @@ num = input("Enter uid-number for deleting from db: ")
 if num:
     print(main.del_uid(num))
 else:
-    print("Nothing to delete")                                                                                    10,11         All
+    print("Nothing to delete")
