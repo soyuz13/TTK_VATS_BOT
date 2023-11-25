@@ -22,7 +22,7 @@ bot = telebot.TeleBot(token=BOT_TOKEN)
 
 def get_sended_uids(db_name: str) -> list:
 
-    if Path(db_name).is_file():
+    if (Path(__file__).parent / db_name).is_file():
         print("Database exsists")
         con = sqlite3.connect(DB_NAME)
         cur = con.cursor()
