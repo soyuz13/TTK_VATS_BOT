@@ -1,10 +1,8 @@
-import main
-from config import DB_NAME
-main.get_sended_uids(DB_NAME)
+from classes import SendedUIDs
 
-num = input("Enter uid-number for deleting from db: ")
-
+SendedUIDs.get_sended_uids()
+num = int(input("Enter uid-number for deleting from db: "))
 if num:
-    print(main.del_uid(num))
+    SendedUIDs.del_uid(num)
 else:
     print("Nothing to delete")
