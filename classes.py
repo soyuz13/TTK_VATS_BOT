@@ -1,7 +1,7 @@
 from email.header import decode_header
 import email
 import imaplib
-from config import *
+from pathlib import Path
 import re
 import pandas as pd
 import sqlite3
@@ -90,19 +90,22 @@ class DefCodes:
 
 class Mail:
 
-    def __init__(self):
-        self.subject = self.body = self.date = self.sender = ''
-        self.letters_uids_list: list = []
-        self.__imap = None
-
-    def connect(self, server: str = 'mdvs.ttk.ru', mail_user: str = MAIL_USER, mail_pass: str = MAIL_PASS) -> None:
+    def __init__(self, mail_user: str, mail_pass: str, server: str = 'mdvs.ttk.ru',) -> None:
         self.__imap = imaplib.IMAP4_SSL(server)
         self.__imap.login(mail_user, mail_pass )
         self.__imap.select("inbox", readonly=True)
-        print(f'Initial imap-class from CONNECT-method {self.__imap}')
+        print(f'Initial imap-class from INIT-method {self.__imap}')
+        self.subject = self.body = self.date = self.sender = ''
+        self.letters_uids_list: list = []
+
+        # self.__imap = None
+    # def connect(self, mail_user: str, mail_pass: str, server: str = 'mdvs.ttk.ru', ) -> None:
+    #     self.__imap = imaplib.IMAP4_SSL(server)
+    #     self.__imap.login(mail_user, mail_pass )
+    #     self.__imap.select("inbox", readonly=True)
+    #     print(f'Initial imap-class from CONNECT-method {self.__imap}')
 
     def get_letters_uids(self, subject: str = 'заявка', sender: str = '') -> None:
-
         if not isinstance(self.__imap, imaplib.IMAP4_SSL):
             raise NoConnection('You need launch CONNECT() method before')
             # print(f'Launch CONNECT-method from {inspect.currentframe().f_code.co_name.upper()} function')
@@ -172,8 +175,11 @@ class Mail:
 
 
 class SendedUIDs:
-    db_name = DB_NAME
+    db_name = None
     sended_uids_list = []
+
+    def __init__(self, db_name):
+        self.__class__.db_name = db_name
 
     @classmethod
     def get_sended_uids(cls):

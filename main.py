@@ -1,14 +1,13 @@
 from classes import Mail, SendedUIDs
-from config import CHAT_ID, BOT_TOKEN
+from config import *
 import telebot
 
 
 def main():
-    mail = Mail()
-    sended = SendedUIDs()
+    mail = Mail(mail_user=MAIL_USER, mail_pass=MAIL_PASS)
+    sended = SendedUIDs(db_name=DB_NAME)
     bot = telebot.TeleBot(token=BOT_TOKEN)
 
-    mail.connect()
     mail.get_letters_uids(subject='заявка')
     sended.get_sended_uids()
 
