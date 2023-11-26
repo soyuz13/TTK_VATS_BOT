@@ -13,6 +13,7 @@ def main():
     for uid in new_uids:
         mail.get_letter(uid)
         text = mail.parse_body()
+        sended.add_uid(uid)
         bot.send_message(chat_id=CHAT_ID, text=text)
 
 
