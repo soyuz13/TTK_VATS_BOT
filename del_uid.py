@@ -1,6 +1,9 @@
 from classes import SendedUIDs
+from config import DB_NAME
 
-SendedUIDs.get_sended_uids()
+sended = SendedUIDs(DB_NAME)
+sended.get_sended_uids()
+print(sended.sended_uids_list)
 num = input("Enter uid-number for deleting from db: ")
 if num:
     SendedUIDs.del_uid(int(num))
