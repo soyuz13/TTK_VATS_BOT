@@ -2,7 +2,6 @@ from email.header import decode_header
 import email
 import imaplib
 from config import *
-import inspect
 import re
 import pandas as pd
 import sqlite3
