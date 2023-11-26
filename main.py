@@ -16,5 +16,5 @@ def main():
         bot.send_message(chat_id=CHAT_ID, text=text)
 
 
-if '__name__' == '__main__':
+if __name__ == '__main__':
     main()

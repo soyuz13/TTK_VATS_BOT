@@ -156,7 +156,7 @@ class Mail:
             print(f'parsed mobile: {num}')
             DefCodes.get_region(num)
 
-        reg, timezone = DefCodes.region, DefCodes.timezone
+        reg, timezone = DefCodes.region_msg, DefCodes.timezone_msg
 
         text = '\n'.join((name, mobile, body, reg, "Время региона: " + timezone, self.date))
 
