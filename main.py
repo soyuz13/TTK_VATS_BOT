@@ -8,7 +8,12 @@ def main():
     sended = SendedUIDs()
     bot = telebot.TeleBot(token=BOT_TOKEN)
 
-    new_uids = set(mail.get_letters_uids('заявка')).difference(set(sended.get_sended_uids()))
+    mail.connect()
+    mail.get_letters_uids(subject='заявка')
+    sended.get_sended_uids()
+
+    new_uids = set(mail.letters_uids_list).difference(set(sended.sended_uids_list))
+    print(f'New uids: {new_uids}')
 
     for uid in new_uids:
         mail.get_letter(uid)

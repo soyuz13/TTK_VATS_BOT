@@ -6,6 +6,16 @@ import inspect
 import re
 import pandas as pd
 import sqlite3
+from typing import Union
+
+
+class NoConnection(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(message)
+
+    def __str__(self):
+        return self.message
 
 
 class Mobile:
@@ -80,49 +90,48 @@ class DefCodes:
 
 
 class Mail:
-    __imap = None
-
-    @classmethod
-    def connect(cls, server: str = 'mdvs.ttk.ru'):
-        cls.__imap = imaplib.IMAP4_SSL(server)
-        cls.__imap.login(MAIL_USER, MAIL_PASS )
-        cls.__imap.select("inbox", readonly=True)
-        print(f'Initial imap-class from CONNECT class-method {cls.__imap}')
 
     def __init__(self):
-        self.subject = self.body = self.date = self.sender = None
+        self.subject = self.body = self.date = self.sender = ''
+        self.letters_uids_list: list = []
+        self.__imap = None
 
-    def get_letters_uids(self, subject: str = '', sender: str = '') -> list:
+    def connect(self, server: str = 'mdvs.ttk.ru', mail_user: str = MAIL_USER, mail_pass: str = MAIL_PASS) -> None:
+        self.__imap = imaplib.IMAP4_SSL(server)
+        self.__imap.login(mail_user, mail_pass )
+        self.__imap.select("inbox", readonly=True)
+        print(f'Initial imap-class from CONNECT-method {self.__imap}')
 
-        if not isinstance(self.__class__.__imap, imaplib.IMAP4_SSL):
-            print(f'Launch CONNECT class-method from {inspect.currentframe().f_code.co_name.upper()} function')
-            self.__class__.connect()
+    def get_letters_uids(self, subject: str = 'заявка', sender: str = '') -> None:
 
-        self.__class__.__imap.literal = subject.encode('utf-8')
+        if not isinstance(self.__imap, imaplib.IMAP4_SSL):
+            raise NoConnection('You need launch CONNECT() method before')
+            # print(f'Launch CONNECT-method from {inspect.currentframe().f_code.co_name.upper()} function')
+            # self.connect()
+
+        self.__imap.literal = subject.encode('utf-8')
         subj_command = ' SUBJECT' if subject else ''
         from_command = f'HEADER FROM "{sender}"' if sender else ''
         search_string = from_command + subj_command
         print('Mail query parameters: ' + (search_string + f' {subject}').strip())
 
-        _, email_uids_list = self.__class__.__imap.uid('SEARCH', 'CHARSET', 'UTF-8', search_string)
+        _, email_uids_list = self.__imap.uid('SEARCH', 'CHARSET', 'UTF-8', search_string)
         uids_list = email_uids_list[0].split()
         uids_int_list = [int(x.decode()) for x in uids_list]
-        # uids_int_list.sort()
-        print(f'mail uids: {uids_int_list}')
-        # self.uids_int_list = uids_int_list
+        print(f'Mail uids: {uids_int_list}')
+        self.letters_uids_list = uids_int_list
+        # return uids_int_list
 
-        return uids_int_list
-
-    def get_letter(self, uid):
-
+    def get_letter(self, uid: Union[int, bytes]) -> None:
         if isinstance(uid, int):
             uid = str(uid).encode()
 
-        if not isinstance(self.__class__.__imap, imaplib.IMAP4_SSL):
-            print(f'Launch CONNECT class-method from {inspect.currentframe().f_code.co_name.upper()} function')
-            self.__class__.connect()
+        if not isinstance(self.__imap, imaplib.IMAP4_SSL):
+            raise NoConnection('You need launch CONNECT() method before')
+            # print(f'Launch CONNECT class-method from {inspect.currentframe().f_code.co_name.upper()} function')
+            # self.connect()
 
-        _, byte_msg = self.__class__.__imap.uid('fetch', uid, '(RFC822)')
+        _, byte_msg = self.__imap.uid('fetch', uid, '(RFC822)')
 
         raw_message = email.message_from_bytes(byte_msg[0][1])
 
@@ -142,29 +151,30 @@ class Mail:
     def parse_body(self):
         if not self.body:
             print('Letter body is empty. Perhaps, you need to run GET_LETTER() method before')
-            return
+            return ''
 
         name = re.search('Name:.*<br>', self.body)
         name = name[0].split(':')[1][:-4].strip() if name else "==No name=="
         mobile = re.search('Phone:.*<br>', self.body)
         mobile = mobile[0].split(':')[1][:-4].strip() if mobile else "==No mobile=="
-        body = re.search('Textarea:.*<br>', self.body)
-        body = body[0].split(':')[1][:-4].strip() if body else "==No text=="
+        body_text = re.search('Textarea:.*<br>', self.body)
+        body_text = body_text[0].split(':')[1][:-4].strip() if body_text else "==No text=="
 
         if mobile:
             num = Mobile.extract10digits(mobile)
-            print(f'parsed mobile: {num}')
+            print(f'Parsed mobile: {num}')
             DefCodes.get_region(num)
 
         reg, timezone = DefCodes.region_msg, DefCodes.timezone_msg
 
-        text = '\n'.join((name, mobile, body, reg, "Время региона: " + timezone, self.date))
+        text = '\n'.join((name, mobile, body_text, reg, "Время региона: " + timezone, self.date))
 
         return(text)
 
 
 class SendedUIDs:
     db_name = DB_NAME
+    sended_uids_list = []
 
     @classmethod
     def get_sended_uids(cls):
@@ -181,9 +191,9 @@ class SendedUIDs:
                 uids_list.append(i[0])
 
             con.close()
-            print(f'sended uids: {uids_list}')
-
-            return uids_list
+            print(f'Sended uids: {uids_list}')
+            cls.sended_uids_list = uids_list
+            # return uids_list
         else:
             print("New database")
             con = sqlite3.connect(cls.db_name)
@@ -191,7 +201,8 @@ class SendedUIDs:
             cur.execute("CREATE TABLE uids(uid INTEGER)")
             con.commit()
             con.close()
-            return []
+            cls.sended_uids_list = []
+            # return []
 
     @classmethod
     def add_uid(cls, uid: int) -> None:
