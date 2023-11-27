@@ -8,7 +8,7 @@ def main():
     sended = SendedUIDs(db_name=DB_NAME)
     bot = telebot.TeleBot(token=BOT_TOKEN)
 
-    mail.get_letters_uids(subject='заявка')
+    mail.get_letters_uids(subject='Заявка с сайта', sender='noreply@tilda.ws')
     sended.get_sended_uids()
 
     new_uids = set(mail.letters_uids_list).difference(set(sended.sended_uids_list))
@@ -18,7 +18,7 @@ def main():
         mail.get_letter(uid)
         text = mail.parse_body()
         sended.add_uid(uid)
-        bot.send_message(chat_id=CHAT_ID, text=text)
+        bot.send_message(chat_id=GROUP_TTK_VATS_CHAT_ID, text=text)
 
 
 if __name__ == '__main__':
